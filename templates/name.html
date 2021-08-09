@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title> เพื่อนรู้ใจ </title>
+    <style>
+        html {
+            position: relative;
+            width: 736px;
+            height: 414px;
+            background: #FFBD59;
+        }
+
+        .p1 {
+            position: absolute;
+            width: 372px;
+            height: 93px;
+            left: 200px;
+            top: 0px;
+            font-style: normal;
+            font-weight: normal;
+            font-size: 80px;
+            line-height: 93px;
+            /* identical to box height */
+
+            text-align: center;
+            text-transform: uppercase;
+            color: #006BBB;
+        }
+
+        .i1 {
+            position: absolute;
+            width: 293px;
+            height: 59px;
+            left: 221px;
+            top: 190px;
+            background: orangered;
+            border-radius: 10px;
+            font-size: 50px;
+        }
+
+        .i2 {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            left: 262px;
+            top: 281px;
+            background: url("{{url_for('static', filename='confirm.png')}}");
+            background-size: 100%;
+            border: none;
+            outline: none;
+        }
+
+        .i3 {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            left: 408px;
+            top: 286px;
+            background: url("{{url_for('static', filename='cancel.png')}}");
+            background-size: 100%;
+            border: none;
+            outline: none;
+        }
+
+        @font-face {
+            font-family: myFirstFont;
+            src: url("{{ url_for('static', filename='maaja.ttf') }}");
+        }
+
+        * {
+            font-family: myFirstFont;
+        }
+    </style>
+</head>
+
+<body>
+    <p class="p1"> ตั้งชื่อให้ฉันหน่อยนะ </p>
+    <form action="#" method="post">
+        <input type="text" name="name" id="name" class="i1">
+        <button type="submit" class="i2">
+    </form>
+    <form action="hello2" method="get">
+        <button type="submit" class="i3">
+    </form>
+</body>
+
+</html>

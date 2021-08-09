@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title> เพื่อนรู้ใจ </title>
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+
+    <style>
+        html {
+            position: relative;
+            width: 736px;
+            height: 414px;
+            background: #FFBD59;
+        }
+
+        video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 736px;
+            height: 414px;
+            z-index: 1;
+            /*
+            Mirror the local video
+            transform: scale(-1, 1);
+            For Firefox (& IE) 
+            */
+            /*-webkit-transform: scale(-1, 1);*/
+            /*for Chrome & Opera (& Safari) */
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 736px;
+            height: 414px;
+            z-index: 1;
+            /*-webkit-transform: scale(-1, 1);*/
+        }
+
+        .button1 {
+            position: absolute;
+            top: 160px;
+            left: 0;
+            display: none;
+        }
+
+        .button2 {
+            position: absolute;
+            top: 160px;
+            left: 10%;
+        }
+
+        .select {
+            display: none;
+        }
+
+        .t1 {
+            z-index: 3;
+            position: absolute;
+            top: 300px;
+            left: 10px;
+            font-size: 28px;
+        }
+
+        .t2 {
+            z-index: 3;
+            position: absolute;
+            top: 340px;
+            left: 10px;
+            font-size: 28px;
+        }
+
+        @font-face {
+            font-family: myFirstFont;
+            src: url("{{ url_for('static', filename='maaja.ttf') }}");
+        }
+
+        * {
+            font-family: myFirstFont;
+        }
+
+        .i1 {
+            position: absolute;
+            width: 736px;
+            height: 414px;
+            left: 0px;
+            top: 0px;
+            z-index: 2;
+        }
+
+        .i2 {
+            position: absolute;
+            width: 118px;
+            height: 118px;
+            left: 611px;
+            top: 9px;
+            z-index: 2;
+        }
+
+        .menu {
+            position: absolute;
+            width: 118px;
+            height: 72px;
+            left: 608px;
+            top: 337px;
+            z-index: 4;
+        }
+
+        .home {
+            position: absolute;
+            width: 64px;
+            height: 62px;
+            left: 6px;
+            top: 6px;
+            z-index: 4;
+        }
+    </style>
+</head>
+
+<body>
+    <img src="{{url_for('static', filename='box1.png')}}" class="i1">
+    <video id="myVideo" autoplay muted></video>
+    <div class="select">
+        <label for="audioSource">Audio source: </label><select id="audioSource"></select>
+    </div>
+
+    <div class="select">
+        <label for="videoSource">Video source: </label><select id="videoSource"></select>
+    </div>
+    <form method="get">
+        <button type="submit" class="button1" id="result">ดูผล</button>
+    </form>
+    <!--
+    <form action="menu" method="get">
+        <button type="submit" class="button2">ต่อไป</button>
+    </form>
+    -->
+    <p class="t1"> อารมณ์ที่พบล่าสุด : </p>
+    <p class="t2"> {{value}} </p>
+    <!--<p class="t2"> อารมณ์ที่พบมากที่สุด : {{value2}} </p>-->
+    <script>
+        var button = document.getElementById("result");
+        setInterval(function () {
+            button.click();
+            document.getElementById("number").stepUp(1);
+        }, 7500); // 7.5 seconds
+
+    </script>
+    <script>
+        const constraints = {
+            audio: false,
+            /*
+            video: {
+                width: {
+                    min: 640,
+                    ideal: 1280,
+                    max: 1920
+                },
+                height: {
+                    min: 480,
+                    ideal: 720,
+                    max: 1080
+                }
+            }
+            */
+        };
+        /*
+        navigator.mediaDevices.getUserMedia(constraints)
+            .then(stream => {
+                document.getElementById("myVideo").srcObject = stream;
+                console.log("Got local user video");
+
+            })
+            .catch(err => {
+                console.log('navigator.getUserMedia error: ', err)
+            });
+        */
+        var videoElement = document.querySelector('video');
+        var audioSelect = document.querySelector('select#audioSource');
+        var videoSelect = document.querySelector('select#videoSource');
+
+        audioSelect.onchange = getStream;
+        videoSelect.onchange = getStream;
+
+        getStream().then(getDevices).then(gotDevices);
+
+        function getDevices() {
+            // AFAICT in Safari this only gets default devices until gUM is called :/
+            return navigator.mediaDevices.enumerateDevices();
+        }
+
+        function gotDevices(deviceInfos) {
+            window.deviceInfos = deviceInfos; // make available to console
+            console.log('Available input and output devices:', deviceInfos);
+            for (const deviceInfo of deviceInfos) {
+                const option = document.createElement('option');
+                option.value = deviceInfo.deviceId;
+                if (deviceInfo.kind === 'audioinput') {
+                    option.text = deviceInfo.label || `Microphone ${audioSelect.length + 1}`;
+                    audioSelect.appendChild(option);
+                } else if (deviceInfo.kind === 'videoinput') {
+                    option.text = deviceInfo.label || `Camera ${videoSelect.length + 1}`;
+                    videoSelect.appendChild(option);
+                }
+            }
+        }
+
+        function getStream() {
+            if (window.stream) {
+                window.stream.getTracks().forEach(track => {
+                    track.stop();
+                });
+            }
+            const audioSource = audioSelect.value;
+            const videoSource = videoSelect.value;
+            const constraints = {
+                audio: { deviceId: audioSource ? { exact: audioSource } : undefined },
+                video: { deviceId: videoSource ? { exact: videoSource } : undefined }
+            };
+            return navigator.mediaDevices.getUserMedia(constraints).
+                then(gotStream).catch(handleError);
+        }
+
+        function gotStream(stream) {
+            window.stream = stream; // make stream available to console
+            audioSelect.selectedIndex = [...audioSelect.options].
+                findIndex(option => option.text === stream.getAudioTracks()[0].label);
+            videoSelect.selectedIndex = [...videoSelect.options].
+                findIndex(option => option.text === stream.getVideoTracks()[0].label);
+            videoElement.srcObject = stream;
+        }
+
+        function handleError(error) {
+            console.error('Error: ', error);
+        }
+    </script>
+    <script id="objDetect" data-source="myVideo" data-mirror="true" data-uploadWidth="1280">
+        //Parameters
+        const s = document.getElementById('objDetect');
+        const sourceVideo = s.getAttribute("data-source"); //the source video to use
+        const uploadWidth = s.getAttribute("data-uploadWidth") || 640; //the width of the upload file
+        const mirror = s.getAttribute("data-mirror") || false; //mirror the boundary boxes
+        const scoreThreshold = s.getAttribute("data-scoreThreshold") || 0.5;
+        const apiServer = s.getAttribute("data-apiServer") || window.location.origin + '/image'; //the full TensorFlow Object Detection API server url
+
+        //Video element selector
+        v = document.getElementById(sourceVideo);
+
+        //for starting events
+        let isPlaying = false,
+            gotMetadata = false;
+
+        //Canvas setup
+
+        //create a canvas to grab an image for upload
+        let imageCanvas = document.createElement('canvas');
+        let imageCtx = imageCanvas.getContext("2d");
+
+        //create a canvas for drawing object boundaries
+        let drawCanvas = document.createElement('canvas');
+        document.body.appendChild(drawCanvas);
+        let drawCtx = drawCanvas.getContext("2d");
+
+        //draw boxes and labels on each detected object
+        //function drawBoxes(objects) {
+
+        //clear the previous drawings
+        //drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+
+        //filter out objects that contain a class_name and then draw boxes and labels on each
+        //objects.filter(object => object.class_name).forEach(object => {
+
+        //let x = object.x * drawCanvas.width;
+        //let y = object.y * drawCanvas.height;
+        //let width = (object.width * drawCanvas.width) - x;
+        //let height = (object.height * drawCanvas.height) - y;
+
+        //flip the x axis
+        //if local video is mirrored
+        //if (mirror) {
+        //x = drawCanvas.width - (x + width)
+        //}
+
+        //drawCtx.fillText(object.class_name + " - " + Math.round(object.score * 100) + "%", x + 5, y + 20);
+        //drawCtx.strokeRect(x, y, width, height);
+
+        //});
+        //}
+
+        //Add file blob to a form and post
+        function postFile(file) {
+
+            //Set options as form data
+            let formdata = new FormData();
+            formdata.append("image", file);
+            //formdata.append("threshold", scoreThreshold);
+
+            let xhr = new XMLHttpRequest();
+            xhr.open('POST', apiServer, true);
+            xhr.onload = function () {
+                if (this.status === 200) {
+                    let objects = JSON.parse(this.response);
+
+                    //draw the boxes
+                    //drawBoxes(objects);
+
+                    //Save and send the next image
+                    imageCtx.drawImage(v, 0, 0, v.videoWidth, v.videoHeight, 0, 0, uploadWidth, uploadWidth * (v.videoHeight / v.videoWidth));
+                    imageCanvas.toBlob(postFile, 'image/jpeg');
+                } else {
+                    console.error(xhr);
+                }
+            };
+            xhr.send(formdata);
+        }
+
+        //Start object detection
+        function startObjectDetection() {
+
+            console.log("starting object detection");
+
+            //Set canvas sizes base don input video
+            drawCanvas.width = v.videoWidth;
+            drawCanvas.height = v.videoHeight;
+
+            imageCanvas.width = uploadWidth;
+            imageCanvas.height = uploadWidth * (v.videoHeight / v.videoWidth);
+
+            //Some styles for the drawcanvas
+            drawCtx.lineWidth = 4;
+            drawCtx.strokeStyle = "cyan";
+            drawCtx.font = "20px Verdana";
+            drawCtx.fillStyle = "cyan";
+
+            //Save and send the first image
+            imageCtx.drawImage(v, 0, 0, v.videoWidth, v.videoHeight, 0, 0, uploadWidth, uploadWidth * (v.videoHeight / v.videoWidth));
+            imageCanvas.toBlob(postFile, 'image/jpeg');
+
+        }
+
+        //Starting events
+
+        //check if metadata is ready - we need the video size
+        v.onloadedmetadata = () => {
+            console.log("video metadata ready");
+            gotMetadata = true;
+            if (isPlaying)
+                startObjectDetection();
+        };
+
+        //see if the video has started playing
+        v.onplaying = () => {
+            console.log("video playing");
+            isPlaying = true;
+            if (gotMetadata) {
+                startObjectDetection();
+            }
+        };
+    </script>
+</body>
+
+</html>

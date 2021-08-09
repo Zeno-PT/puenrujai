@@ -1,0 +1,6 @@
+Flask
+gunicorn
+python-multipart
+tensorflow-cpu
+opencv-python
+Pillow

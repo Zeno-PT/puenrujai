@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title> เพื่อนรู้ใจ </title>
+    <style>
+        html {
+            position: relative;
+            width: 736px;
+            height: 414px;
+            background: #FFBD59;
+        }
+
+        .i1 {
+            position: absolute;
+            width: 736px;
+            height: 414px;
+            left: 0px;
+            top: 0px;
+        }
+
+        .menu {
+            position: absolute;
+            width: 118px;
+            height: 75px;
+            left: 615px;
+            top: 337px;
+            z-index: 4;
+        }
+
+        .home {
+            position: absolute;
+            width: 64px;
+            height: 62px;
+            left: 9px;
+            top: 347px;
+            z-index: 4;
+        }
+    </style>
+</head>
+
+<body>
+    <img src="{{url_for('static', filename='recordbg.png')}}" class="i1">
+    <a href="{{ url_for('menu') }}">
+        <img src="{{url_for('static', filename='menu2.png')}}" class="menu">
+    </a>
+    <a href="{{ url_for('main') }}">
+        <img src="{{url_for('static', filename='home.png')}}" class="home">
+    </a>
+</body>
+
+</html>
